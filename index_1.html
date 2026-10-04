@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Baba Evi Alarm – Panel v1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#E9EDF1;--surface:#FFFFFF;--ink:#17222D;--muted:#5B6874;--line:#CED6DD;
+  --safe:#1F6F8B;--alarm:#D7263D;--warn:#B67C00;--zone:#DDE5EB;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#10171E;--surface:#18222C;--ink:#E6EDF2;--muted:#93A1AD;--line:#2A3743;--safe:#4FA3C0;--alarm:#FF4D5E;--warn:#E8B23A;--zone:#22303C}
+}
+:root[data-theme="dark"]{--bg:#10171E;--surface:#18222C;--ink:#E6EDF2;--muted:#93A1AD;--line:#2A3743;--safe:#4FA3C0;--alarm:#FF4D5E;--warn:#E8B23A;--zone:#22303C}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Rubik',system-ui,-apple-system,'Segoe UI',sans-serif;font-size:16px;line-height:1.45}
+.wrap{max-width:720px;margin:0 auto;padding:16px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+h1{font-size:1.5rem;margin:0;font-weight:700;letter-spacing:-.01em}
+.pill{padding:6px 12px;border-radius:999px;font-weight:500;font-size:.875rem;background:var(--zone);white-space:nowrap}
+.pill.ok{color:var(--safe)}.pill.al{background:var(--alarm);color:#fff}.pill.wa{color:var(--warn)}
+.note{color:var(--muted);font-size:.85rem;margin:4px 0 16px;display:flex;justify-content:space-between;gap:8px}
+.link{background:none;border:0;color:var(--safe);font:inherit;font-size:.85rem;cursor:pointer;padding:0;text-decoration:underline}
+.house{background:var(--surface);border-radius:20px;padding:12px;border:1px solid var(--line)}
+svg{width:100%;height:auto;display:block}
+.zone{fill:var(--zone);stroke:var(--line);stroke-width:2;transition:fill .3s,opacity .3s}
+.zone.al{fill:var(--alarm);animation:pulse 1s infinite}
+.zone.off{fill:var(--warn);opacity:.55}
+.zone.pas{opacity:.35}
+.roof,.rail{fill:none;stroke:var(--muted);stroke-width:2}
+.door{fill:var(--muted)}
+.ztxt{font:500 13px Rubik,sans-serif;fill:var(--ink);text-anchor:middle;pointer-events:none}
+.ztxt.sm{font-size:11px}
+.ztxt.al{fill:#fff}
+@keyframes pulse{50%{opacity:.5}}
+.leds{display:flex;justify-content:space-around;flex-wrap:wrap;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.leds span.t{width:100%;text-align:center;color:var(--muted);font-size:.8rem}
+.led{display:flex;align-items:center;gap:6px;font-size:.85rem}
+.led i{width:14px;height:14px;border-radius:50%;background:var(--line)}
+.led i.on{background:var(--alarm);box-shadow:0 0 10px var(--alarm)}
+.led i.blink{background:var(--warn);animation:pulse 2s infinite}
+.alarmbar{display:none;margin:16px 0 0;background:var(--alarm);color:#fff;border-radius:16px;padding:16px;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.alarmbar.show{display:flex}
+.alarmbar strong{font-size:1.15rem;display:block}
+.alarmbar p{margin:2px 0 0;font-size:.9rem}
+.stop{background:#fff;color:#C01F33;font:700 1.15rem Rubik,sans-serif;border:0;border-radius:12px;padding:14px 32px;cursor:pointer}
+h2{font-size:1.15rem;margin:28px 0 4px}
+.sub{color:var(--muted);font-size:.85rem;margin:0 0 10px}
+.units{display:grid;gap:12px}
+@media(min-width:640px){.units{grid-template-columns:1fr 1fr}}
+.unit,.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}
+.unit header{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.unit h3{margin:0;font-size:1.05rem}
+.st{font-size:.8rem;color:var(--muted);text-align:right}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;font-size:.92rem}
+select,input[type=time],input[type=email],input[type=password]{font:inherit;font-size:.9rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.switch{width:46px;height:26px;border-radius:13px;border:0;background:var(--line);position:relative;cursor:pointer;flex:none}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s}
+.switch[aria-pressed="true"]{background:var(--safe)}
+.switch[aria-pressed="true"]::after{left:23px}
+.sensor{border-top:1px solid var(--line);margin-top:12px;padding-top:10px}
+.sh{display:flex;justify-content:space-between;font-size:.92rem}
+.meter{position:relative;height:8px;background:var(--bg);border-radius:4px;margin:8px 0 2px}
+.meter i{position:absolute;top:0;bottom:0;left:0;background:var(--safe);border-radius:4px;transition:width .4s}
+.meter i.hit{background:var(--alarm)}
+.meter em{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--safe);margin:4px 0 0}
+.btn{font:500 .9rem Rubik,sans-serif;border-radius:10px;padding:9px 12px;cursor:pointer;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%;margin-top:8px}
+.btn.pri{background:var(--safe);color:#fff;border-color:var(--safe)}
+.btn:disabled{opacity:.6;cursor:default}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--safe);outline-offset:2px}
+.buz{font-size:.8rem;color:var(--alarm);font-weight:700;margin-left:6px}
+.empty{color:var(--muted);font-size:.9rem;margin:8px 0 0}
+.tscroll{overflow-x:auto}
+.sched{width:100%;border-collapse:collapse;font-size:.92rem}
+.sched td{padding:7px 4px;border-top:1px solid var(--line);white-space:nowrap}
+.hist{list-style:none;margin:0;padding:0;max-height:360px;overflow-y:auto}
+.hist li{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid var(--line);font-size:.92rem}
+.hist li:first-child{border-top:0}
+.hist time{color:var(--muted);white-space:nowrap}
+.reps{display:flex;gap:8px;flex-wrap:wrap}.reps .btn{width:auto;flex:1;margin-top:0}
+.rep{white-space:pre-line;background:var(--bg);border-radius:12px;padding:10px 12px;margin-top:10px;font-size:.92rem}
+.hc{color:var(--muted);font-weight:400;font-size:.9rem}
+.login{max-width:380px;margin:12vh auto 0;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:24px}
+.login h1{margin-bottom:6px}
+.login label{display:block;font-size:.9rem;margin:14px 0 4px}
+.login input{width:100%;padding:10px 12px;font-size:1rem}
+.err{color:var(--alarm);font-size:.9rem;min-height:1.3em;margin:10px 0 0}
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.9rem;display:none;max-width:90vw}
+.toast.show{display:block}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="login" id="loginView" hidden>
+  <h1>Baba evi alarm</h1>
+  <p class="sub">Panele girmek için giriş yap.</p>
+  <label for="em">E-posta</label>
+  <input type="email" id="em" value="panel@evkontrol.com" autocomplete="username">
+  <label for="pw">Şifre</label>
+  <input type="password" id="pw" autocomplete="current-password">
+  <button class="btn pri" id="loginBtn" style="margin-top:16px">Giriş yap</button>
+  <p class="err" id="loginErr"></p>
+</div>
+
+<div class="wrap" id="appView" hidden>
+  <div class="top">
+    <h1>Baba evi alarm</h1>
+    <span class="pill ok" id="pill">Bağlanıyor</span>
+  </div>
+  <p class="note"><span id="conn">Firebase'e bağlanıyor</span><button class="link" id="logout">Çıkış yap</button></p>
+
+  <div class="house">
+    <svg viewBox="0 0 360 215" role="img" aria-label="Ev bölgelerinin durumu">
+      <polygon class="roof" points="70,70 180,18 290,70"/>
+      <rect class="zone" id="z-kapi" x="10" y="100" width="66" height="40" rx="4"/>
+      <rect class="zone" id="z-hol" x="80" y="70" width="200" height="70"/>
+      <rect class="zone" id="z-balkon" x="284" y="100" width="62" height="40" rx="4"/>
+      <rect class="zone" id="z-altkat" x="80" y="140" width="200" height="60"/>
+      <rect class="door" x="76" y="104" width="7" height="36"/>
+      <path class="rail" d="M284 112 H346 M296 112 V140 M310 112 V140 M324 112 V140 M338 112 V140"/>
+      <line class="roof" x1="0" y1="200" x2="360" y2="200"/>
+      <text class="ztxt sm" id="tz-kapi" x="43" y="124">Kapı Önü</text>
+      <text class="ztxt" id="tz-hol" x="180" y="110">Hol</text>
+      <text class="ztxt sm" id="tz-balkon" x="315" y="96">Balkon</text>
+      <text class="ztxt" id="tz-altkat" x="180" y="175">Alt Kat</text>
+    </svg>
+    <div class="leds">
+      <span class="t">Ana ünite ışıkları</span>
+      <span class="led"><i id="l-kapi"></i>Kapı Önü</span>
+      <span class="led"><i id="l-hol"></i>Hol</span>
+      <span class="led"><i id="l-balkon"></i>Balkon</span>
+      <span class="led"><i id="l-altkat"></i>Alt Kat</span>
+    </div>
+  </div>
+
+  <div class="alarmbar" id="alarmbar" role="alert">
+    <div>
+      <strong id="ab-s"></strong>
+      <p id="ab-p"></p>
+      <p id="ab-r"></p>
+    </div>
+    <button class="stop" id="stop">Sustur</button>
+  </div>
+
+  <h2>Üniteler</h2>
+  <p class="sub">Mesafe, algılama sınırının altına düşerse alarm verilir. Ayarlar üniteye 10 sn içinde ulaşır.</p>
+  <div class="units" id="units"></div>
+
+  <h2>Zaman planı</h2>
+  <p class="sub">Sadece Çalışma ayarı "Plana göre" olan ünitelerde uygulanır.</p>
+  <div class="panel">
+    <div class="row" style="margin-top:0"><label for="sch-unit">Ünite</label><select id="sch-unit"></select></div>
+    <div class="tscroll"><table class="sched"><tbody id="sched"></tbody></table></div>
+    <button class="btn" id="schAll">Bu planı tüm ünitelere uygula</button>
+  </div>
+
+  <h2>Rapor</h2>
+  <p class="sub">Alarm geçmişinden hesaplanır. Telegram'a gönderme ana ünite kurulunca çalışır.</p>
+  <div class="panel">
+    <div class="reps">
+      <button class="btn" data-rep="hafta">Haftalık</button>
+      <button class="btn" data-rep="ay">Aylık</button>
+      <button class="btn" data-rep="anlik">Tümü</button>
+    </div>
+    <div class="rep" id="rep" hidden></div>
+    <button class="btn" id="repTg" hidden>Telegram'a gönder</button>
+  </div>
+
+  <h2>Alarm geçmişi <span class="hc" id="hcount"></span></h2>
+  <p class="sub">En fazla 100 kayıt tutulur, yenisi gelince en eskisi silinir.</p>
+  <div class="panel"><ul class="hist" id="hist"></ul></div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getDatabase, ref, onValue, set, update, runTransaction, onDisconnect, off } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyCHXnopg4ZvxRMEHzGmJephnQqyAnneqnE",
+  authDomain: "ev-kontrol-12e1d.firebaseapp.com",
+  databaseURL: "https://ev-kontrol-12e1d-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "ev-kontrol-12e1d",
+  appId: "1:942864129630:web:6b1376a2643666a6ae1ecf"
+});
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+const UNITS = [{id:'giris',name:'Giriş'},{id:'balkon',name:'Balkon'},{id:'altkat',name:'Alt Kat'}];
+const ZONES = [{id:'kapi',unit:'giris'},{id:'hol',unit:'giris'},{id:'balkon',unit:'balkon'},{id:'altkat',unit:'altkat'}];
+const DAY_KEYS = ['pzt','sal','car','per','cum','cmt','paz'];
+const DAY_NAMES = ['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'];
+const JS_DAY = ['paz','pzt','sal','car','per','cum','cmt'];
+const OFF = 120, ALARM_DUR = 60, BUZ_ON = 5, BUZ_CYC = 15, MAXD = 400;
+
+let offset = 0, U = {}, ANA = null, A = null, K = [], built = {}, listeners = [], canliSet = false, lastRep = null;
+const calib = {};
+
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2,'0');
+const now = () => Math.floor((Date.now() + offset) / 1000);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const dhm = ts => { const d = new Date(ts*1000); return `${pad(d.getDate())}.${pad(d.getMonth()+1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const toMin = t => { const p = String(t||'00:00').split(':').map(Number); return p[0]*60 + (p[1]||0); };
+
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast.h); toast.h=setTimeout(()=>t.classList.remove('show'),2500); }
+async function w(p, fn){ try{ await fn; }catch(e){ toast('Kaydedilemedi: '+(e.code||e.message)); console.error(p,e); } }
+
+function inPlan(plan){
+  if(!plan) return true;
+  const d=new Date(), m=d.getHours()*60+d.getMinutes();
+  const t=plan[JS_DAY[d.getDay()]], y=plan[JS_DAY[(d.getDay()+6)%7]];
+  if(t && t.on){ const s=toMin(t.bas), e=toMin(t.bit); if(s<=e){ if(m>=s&&m<e) return true; } else if(m>=s) return true; }
+  if(y && y.on){ const s=toMin(y.bas), e=toMin(y.bit); if(s>e && m<e) return true; }
+  return false;
+}
+const modOf = u => u?.ayar?.mod || 'on';
+const isAktif = u => { const m=modOf(u); return m==='on' || (m==='plan' && inPlan(u?.ayar?.plan)); };
+const sonOf = u => u?.durum?.son_sinyal || 0;
+const isOnline = u => { const s=sonOf(u); return s>0 && now()-s<=OFF; };
+const alarmLive = () => A && A.aktif && now()-(A.baslangic||0) < ALARM_DUR;
+
+/* ---------------- Login ---------------- */
+$('loginBtn').onclick = async () => {
+  $('loginErr').textContent=''; $('loginBtn').disabled=true;
+  try{ await signInWithEmailAndPassword(auth, $('em').value.trim(), $('pw').value); }
+  catch(e){ $('loginErr').textContent = e.code==='auth/invalid-credential'||e.code==='auth/wrong-password' ? 'E-posta veya şifre hatalı.' : 'Giriş yapılamadı: '+e.code; }
+  $('loginBtn').disabled=false;
+};
+$('pw').addEventListener('keydown', e=>{ if(e.key==='Enter') $('loginBtn').click(); });
+$('logout').onclick = async () => { await setCanli(false); signOut(auth); };
+
+onAuthStateChanged(auth, user => {
+  listeners.forEach(fn=>fn()); listeners=[];
+  if(!user){ $('appView').hidden=true; $('loginView').hidden=false; return; }
+  $('loginView').hidden=true; $('appView').hidden=false;
+  start();
+});
+
+/* ---------------- Data ---------------- */
+function listen(path, cb){ const r=ref(db,path); onValue(r, cb, e=>toast('Okuma hatası: '+e.code)); listeners.push(()=>off(r)); }
+
+function start(){
+  $('units').innerHTML = UNITS.map(u=>`<section class="unit" id="card-${u.id}"><header><h3>${u.name}</h3><span class="st">Bekleniyor</span></header><p class="empty">Bu ünite henüz kurulmadı. Kart ilk açıldığında burada görünür.</p></section>`).join('') + anaCard();
+  built = {};
+  $('sch-unit').innerHTML = UNITS.map(u=>`<option value="${u.id}">${u.name}</option>`).join('');
+  listen('.info/serverTimeOffset', s=>{ offset=s.val()||0; });
+  listen('.info/connected', s=>{ $('conn').textContent = s.val() ? 'Firebase bağlı' : 'Bağlantı yok, yeniden deneniyor'; });
+  listen('uniteler', s=>{ U=s.val()||{}; UNITS.forEach(u=>{ if(U[u.id]) buildCard(u.id); }); if(!canliSet && Object.keys(U).length){ canliSet=true; setCanli(true); } renderSched(); render(); });
+  listen('ana', s=>{ ANA=s.val(); render(); });
+  listen('alarm', s=>{ A=s.val(); render(); });
+  listen('kayitlar', s=>{ const v=s.val()||{}; K=Object.values(v).filter(x=>x&&x.zaman).sort((a,b)=>b.zaman-a.zaman); renderHist(); });
+}
+
+async function setCanli(v){
+  for(const u of UNITS){
+    if(!U[u.id]) continue;
+    const r=ref(db,`uniteler/${u.id}/ayar/canli`);
+    try{ await set(r,v); if(v) onDisconnect(r).set(false); }catch(e){}
+  }
+}
+document.addEventListener('visibilitychange', ()=>{ if(auth.currentUser && canliSet) setCanli(document.visibilityState==='visible'); });
+
+/* ---------------- Cards ---------------- */
+function anaCard(){
+  return `<section class="unit" id="card-ana">
+  <header><h3>Ana ünite</h3><span class="st" id="st-ana"></span></header>
+  <p class="sub" style="margin:8px 0 0">Işıkları ve Telegram mesajlarını yönetir. Kapanırsa mesajı saha üniteleri atar.</p>
+  <div class="row"><span>Buzzer<span class="buz" id="bz-ana"></span></span>
+    <button class="switch" aria-label="Ana ünite buzzer" aria-pressed="true" id="sw-ana" data-buz="ana"></button></div>
+</section>`;
+}
+function buildCard(id){
+  if(built[id]) return; built[id]=true;
+  const u=U[id], name=u.ad||UNITS.find(x=>x.id===id).name;
+  const sens=['s1','s2'].map(k=>{ const s=u.ayar?.sensorler?.[k]||{}; return `<div class="sensor">
+    <div class="sh"><b id="${id}-${k}-ad">${esc(s.ad||k)}</b><span id="${id}-${k}-d">—</span></div>
+    <div class="meter"><i id="${id}-${k}-m"></i><em id="${id}-${k}-t"></em></div>
+    <div class="row"><label for="${id}-${k}-r">Algılama sınırı</label><span id="${id}-${k}-v">${s.esik||0} cm</span></div>
+    <input type="range" id="${id}-${k}-r" min="30" max="${MAXD}" step="5" value="${s.esik||150}" data-thr="${id}:${k}">
+    <button class="btn" id="${id}-${k}-c" data-cal="${id}:${k}">Sınırı otomatik ayarla (10 sn ölç)</button>
+  </div>`; }).join('');
+  $('card-'+id).innerHTML = `<header><h3 id="${id}-name">${esc(name)}</h3><span class="st" id="st-${id}"></span></header>
+  <div class="row"><label for="mode-${id}">Çalışma</label>
+    <select id="mode-${id}" data-mode="${id}"><option value="plan">Plana göre</option><option value="on">Hep aktif</option><option value="off">Pasif</option></select></div>
+  <div class="row"><span>Buzzer<span class="buz" id="bz-${id}"></span></span>
+    <button class="switch" aria-label="${esc(name)} buzzer" aria-pressed="true" id="sw-${id}" data-buz="${id}"></button></div>
+  ${sens}`;
+}
+
+function render(){
+  const t=now(), live=alarmLive(), el=live? t-A.baslangic : 0, buzzing=live && (el%BUZ_CYC)<BUZ_ON;
+
+  ZONES.forEach(z=>{
+    const u=U[z.unit];
+    const cls = live && A.led===z.id ? 'al' : (!u || !isOnline(u)) ? 'off' : !isAktif(u) ? 'pas' : '';
+    $('z-'+z.id).setAttribute('class','zone '+cls);
+    $('tz-'+z.id).setAttribute('class','ztxt'+(z.id==='kapi'||z.id==='balkon'?' sm':'')+(cls==='al'?' al':''));
+    $('l-'+z.id).className = cls==='al' ? 'on' : cls==='off' ? 'blink' : '';
+  });
+
+  const ab=$('alarmbar');
+  if(live){
+    ab.classList.add('show');
+    $('ab-s').textContent='Hareket: '+(A.sensor||'');
+    const c=el%BUZ_CYC;
+    $('ab-p').textContent = buzzing ? `Buzzer çalıyor, ${BUZ_ON-c} sn` : `Buzzer susuyor, ${BUZ_CYC-c} sn sonra tekrar çalar`;
+    $('ab-r').textContent = `Alarm ${ALARM_DUR-el} sn sonra kendiliğinden biter`;
+  } else ab.classList.remove('show');
+
+  const offN = UNITS.filter(u=>U[u.id] && !isOnline(U[u.id])).length + (isOnline(ANA)?0:1);
+  const pill=$('pill');
+  if(live){ pill.textContent='Alarm!'; pill.className='pill al'; }
+  else if(offN){ pill.textContent=offN+' ünite çevrimdışı'; pill.className='pill wa'; }
+  else { pill.textContent='Sistem normal'; pill.className='pill ok'; }
+
+  UNITS.forEach(x=>{
+    const id=x.id, u=U[id]; if(!u || !built[id]) return;
+    const on=isOnline(u), act=isAktif(u), ago=sonOf(u)?t-sonOf(u):null;
+    const txt = !on ? (ago==null?'Hiç bağlanmadı':'Çevrimdışı, son sinyal '+agoStr(ago)) : (act?'Devrede':'Devre dışı')+', '+agoStr(ago);
+    const col = !on ? 'var(--warn)' : act ? 'var(--safe)' : 'var(--muted)';
+    $('st-'+id).innerHTML=`<span class="dot" style="background:${col}"></span>${esc(txt)}`;
+    const sel=$('mode-'+id); if(document.activeElement!==sel) sel.value=modOf(u);
+    const bOn=u.ayar?.buzzer!==false; $('sw-'+id).setAttribute('aria-pressed',bOn);
+    $('bz-'+id).textContent = buzzing && bOn && on ? '🔊 çalıyor' : '';
+    if(u.ad) $(id+'-name').textContent=u.ad;
+    ['s1','s2'].forEach((k,i)=>{
+      const s=u.ayar?.sensorler?.[k]||{}, d=u.durum?.['mesafe_'+k];
+      const esik=s.esik||0, r=$(`${id}-${k}-r`);
+      if(s.ad) $(`${id}-${k}-ad`).textContent=s.ad;
+      const dv = (d==null||d===0) ? null : d;
+      $(`${id}-${k}-d`).textContent = dv==null ? '—' : dv>=999 ? 'yankı yok' : dv+' cm';
+      const m=$(`${id}-${k}-m`);
+      m.style.width = dv==null ? '0%' : (Math.min(dv,MAXD)/MAXD*100)+'%';
+      m.className = dv!=null && dv<esik ? 'hit' : '';
+      if(document.activeElement!==r){ r.value=esik; $(`${id}-${k}-v`).textContent=esik+' cm'; }
+      $(`${id}-${k}-t`).style.left=(Number(r.value)/MAXD*100)+'%';
+      const c=calib[id+':'+k]; if(c && dv!=null && dv<999 && c.last!==t){ c.vals.push(dv); c.last=t; }
+    });
+  });
+
+  const anaOn=isOnline(ANA), anaAgo=ANA?.durum?.son_sinyal ? t-ANA.durum.son_sinyal : null;
+  $('st-ana').innerHTML=`<span class="dot" style="background:${anaOn?'var(--safe)':'var(--warn)'}"></span>${anaOn?'Çevrimiçi, '+agoStr(anaAgo):anaAgo==null?'Henüz kurulmadı':'Çevrimdışı'}`;
+  const anaB=ANA?.ayar?.buzzer!==false; $('sw-ana').setAttribute('aria-pressed',anaB);
+  $('bz-ana').textContent = buzzing && anaB && anaOn ? '🔊 çalıyor' : '';
+}
+function agoStr(s){ if(s==null) return ''; if(s<60) return s+' sn önce'; if(s<3600) return Math.floor(s/60)+' dk önce'; return Math.floor(s/3600)+' sa önce'; }
+
+/* ---------------- Schedule ---------------- */
+function renderSched(){
+  const tb=$('sched'); if(tb.contains(document.activeElement)) return;
+  const id=$('sch-unit').value, plan=U[id]?.ayar?.plan;
+  if(!plan){ tb.innerHTML='<tr><td class="empty">Ünite kurulunca plan burada görünür.</td></tr>'; return; }
+  tb.innerHTML = DAY_KEYS.map((k,i)=>{ const r=plan[k]||{on:false,bas:'22:00',bit:'07:00'}; return `<tr><td>${DAY_NAMES[i]}</td>
+    <td><button class="switch" data-sday="${k}" aria-pressed="${!!r.on}" aria-label="${DAY_NAMES[i]} planı"></button></td>
+    <td><input type="time" value="${esc(r.bas)}" data-sbas="${k}" aria-label="${DAY_NAMES[i]} başlangıç"> – <input type="time" value="${esc(r.bit)}" data-sbit="${k}" aria-label="${DAY_NAMES[i]} bitiş"></td></tr>`; }).join('');
+}
+$('sch-unit').onchange = renderSched;
+$('schAll').onclick = async () => {
+  const id=$('sch-unit').value, plan=U[id]?.ayar?.plan; if(!plan) return;
+  if(!confirm('Bu ünitenin planı diğer ünitelere de kopyalansın mı?')) return;
+  for(const u of UNITS) if(U[u.id] && u.id!==id) await w('plan', set(ref(db,`uniteler/${u.id}/ayar/plan`), plan));
+  toast('Plan tüm ünitelere uygulandı');
+};
+
+/* ---------------- Log + reports ---------------- */
+async function kayitEkle(tip, ad){
+  const r = await runTransaction(ref(db,'kayit_sira'), v => (((v||0)+1)%100));
+  const idx = ((r.snapshot.val()||0)+99)%100;
+  await set(ref(db,`kayitlar/k${pad(idx)}`), {tip, ad, zaman: now()});
+}
+function histText(h){
+  if(h.tip==='alarm') return '⚠️ '+h.ad;
+  if(h.tip==='kesinti') return '⚠️ '+h.ad+' bağlantı kesildi';
+  if(h.tip==='geri') return '✅ '+h.ad+' geri geldi';
+  if(h.tip==='sustur') return '🔕 Panelden susturuldu';
+  return h.ad||h.tip;
+}
+function renderHist(){
+  $('hcount').textContent=`(${K.length} / 100)`;
+  $('hist').innerHTML = K.length ? K.map(h=>`<li><span>${esc(histText(h))}</span><time>${dhm(h.zaman)}</time></li>`).join('') : '<li class="empty">Henüz kayıt yok.</li>';
+}
+function report(kind){
+  const t=now(), span={hafta:7,ay:30}[kind], inR=h=>!span||t-h.zaman<=span*86400;
+  const al=K.filter(h=>h.tip==='alarm'&&inR(h)), c={};
+  al.forEach(h=>c[h.ad]=(c[h.ad]||0)+1);
+  const names=[]; UNITS.forEach(u=>['s1','s2'].forEach(k=>{ const n=U[u.id]?.ayar?.sensorler?.[k]?.ad; if(n) names.push(n); }));
+  Object.keys(c).forEach(n=>{ if(!names.includes(n)) names.push(n); });
+  const top=Object.entries(c).sort((a,b)=>b[1]-a[1])[0];
+  const title={hafta:'Haftalık rapor',ay:'Aylık rapor',anlik:'Tüm kayıtlar'}[kind];
+  return `📊 ${title}\nToplam alarm: ${al.length}\n`+names.map(n=>`${n}: ${c[n]||0}`).join('\n')
+    +`\nEn çok alarm: ${top?top[0]:'—'}\nBağlantı kesintisi: ${K.filter(h=>h.tip==='kesinti'&&inR(h)).length}\nPanelden susturma: ${K.filter(h=>h.tip==='sustur'&&inR(h)).length}`;
+}
+
+/* ---------------- Events ---------------- */
+$('stop').onclick = async () => {
+  await w('sustur', update(ref(db,'alarm'), {aktif:false}));
+  w('kayit', kayitEkle('sustur','Panel'));
+  toast('Alarm susturuldu');
+};
+document.addEventListener('click', async e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  const d=b.dataset;
+  if(d.buz){
+    const v = b.getAttribute('aria-pressed')!=='true';
+    const p = d.buz==='ana' ? 'ana/ayar/buzzer' : `uniteler/${d.buz}/ayar/buzzer`;
+    b.setAttribute('aria-pressed',v); await w(p, set(ref(db,p), v)); return;
+  }
+  if(d.sday){
+    const id=$('sch-unit').value, v=b.getAttribute('aria-pressed')!=='true';
+    b.setAttribute('aria-pressed',v); await w('plan', set(ref(db,`uniteler/${id}/ayar/plan/${d.sday}/on`), v)); return;
+  }
+  if(d.cal){
+    const key=d.cal; if(calib[key]) return;
+    const [id,k]=key.split(':');
+    if(!isOnline(U[id])){ toast('Ünite çevrimdışı, ölçüm yapılamaz'); return; }
+    calib[key]={vals:[],last:0}; b.disabled=true; b.textContent='Ölçülüyor, önünden çekil (10 sn)';
+    setTimeout(async ()=>{
+      const v=calib[key].vals; delete calib[key]; b.disabled=false; b.textContent='Sınırı otomatik ayarla (10 sn ölç)';
+      if(v.length<3){ toast('Yeterli ölçüm gelmedi, sensör yankı vermiyor olabilir'); return; }
+      const esik=Math.max(30, Math.min(MAXD, Math.round((Math.min(...v)-25)/5)*5));
+      if(!confirm(`En yakın ölçüm ${Math.min(...v)} cm. Sınır ${esik} cm yapılsın mı?`)) return;
+      await w('esik', set(ref(db,`uniteler/${id}/ayar/sensorler/${k}/esik`), esik)); toast('Sınır '+esik+' cm yapıldı');
+    }, 10000);
+    return;
+  }
+  if(d.rep){ lastRep=report(d.rep); $('rep').textContent=lastRep; $('rep').hidden=false; $('repTg').hidden=false; return; }
+  if(b.id==='repTg'){ await w('komut', set(ref(db,'komut/rapor'), {metin:lastRep, zaman:now()})); toast('Rapor isteği ana üniteye iletildi'); }
+});
+document.addEventListener('input', e=>{
+  const t=e.target;
+  if(t.dataset.thr){ const [id,k]=t.dataset.thr.split(':'); $(`${id}-${k}-v`).textContent=t.value+' cm'; $(`${id}-${k}-t`).style.left=(t.value/MAXD*100)+'%'; }
+});
+document.addEventListener('change', async e=>{
+  const t=e.target, d=t.dataset;
+  if(d.thr){ const [id,k]=d.thr.split(':'); await w('esik', set(ref(db,`uniteler/${id}/ayar/sensorler/${k}/esik`), Number(t.value))); toast('Sınır kaydedildi'); t.blur(); }
+  else if(d.mode){ await w('mod', set(ref(db,`uniteler/${d.mode}/ayar/mod`), t.value)); t.blur(); }
+  else if(d.sbas||d.sbit){
+    const id=$('sch-unit').value, key=d.sbas||d.sbit, f=d.sbas?'bas':'bit';
+    if(t.value) await w('plan', set(ref(db,`uniteler/${id}/ayar/plan/${key}/${f}`), t.value));
+  }
+});
+
+setInterval(()=>{ if(auth.currentUser) render(); }, 1000);
+</script>
+</body>
+</html>
